@@ -1,0 +1,219 @@
+import pygame
+import math
+import random
+import time
+
+
+# Inicializar o Pygame
+pygame.init()
+
+
+# Configurações da tela
+screen_width = 800
+screen_height = 600
+escala = (800, 600)
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption('Cubo Azul e Cubo Vermelho')
+cenario = pygame.image.load('cenario1.png')
+cenario = pygame.transform.scale(cenario, escala)
+
+
+# Cores
+blue = (0, 0, 255)
+red = (255, 0, 0)
+pink = (255, 105, 180)
+black = (0, 0, 0)
+green = (0, 255, 0)
+orange = (255, 165, 0)
+
+
+# Propriedades do cubo
+cube_size = 50
+cube_speed = 7  # Aumentar a velocidade do cubo azul
+shooting_speed = 10
+
+
+# Propriedades do cubo vermelho
+red_cube_speed = 3
+red_lives = 10  # Aumentar a vida do cubo vermelho para 10 acertos
+
+
+# Tempo de recarga dos tiros
+last_shot_time = 0
+shot_cooldown = 0.5  # 0,5 segundos de recarga entre os tiros
+
+
+# Função para desenhar o cubo azul
+def draw_blue_cube(x, y):
+    pygame.draw.rect(screen, blue, [x, y, cube_size, cube_size])
+
+
+# Função para desenhar o cubo vermelho
+def draw_red_cube(x, y):
+    pygame.draw.rect(screen, red, [x, y, cube_size, cube_size])
+
+
+# Função para desenhar os tiros
+def draw_bullets(bullets):
+    for bullet in bullets:
+        pygame.draw.rect(screen, pink, [bullet[0], bullet[1], 10, 10])
+
+
+# Função para verificar colisão
+def check_collision(x1, y1, x2, y2):
+    return (x1 < x2 + cube_size and
+            x1 + cube_size > x2 and
+            y1 < y2 + cube_size and
+            y1 + cube_size > y2)
+
+
+# Função para mover os tiros
+def move_bullets(bullets):
+    for bullet in bullets:
+        bullet[0] += bullet[2] * shooting_speed
+        bullet[1] += bullet[3] * shooting_speed
+
+
+# Função para calcular a direção do tiro
+def calculate_direction(start_x, start_y, target_x, target_y):
+    dx = target_x - start_x
+    dy = target_y - start_y
+    distance = math.sqrt(dx ** 2 + dy ** 2)
+    if distance == 0:
+        return (0, 0)
+    return (dx / distance, dy / distance)
+
+
+# Função para exibir a tela de menu
+def show_menu():
+    background_image = pygame.image.load('menu.png')
+    background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
+    font = pygame.font.SysFont(None, 55)
+    play_button_rect = pygame.Rect(screen_width // 2 - 100, screen_height // 2 - 25, 200, 50)
+
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                if play_button_rect.collidepoint(mouse_x, mouse_y):
+                    return
+
+
+        screen.blit(background_image, (0, 0))
+        pygame.draw.rect(screen, orange, play_button_rect)
+        play_text = font.render('Jogar', True, black)
+        screen.blit(play_text, play_button_rect.move(20, 10))
+        pygame.display.flip()
+        pygame.time.Clock().tick(30)
+
+
+# Função para mostrar a tela de vitória
+def show_victory_screen():
+    background_image = pygame.image.load('menu.png')
+    background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
+    screen.blit(background_image, (0, 0))
+    font = pygame.font.SysFont(None, 75)
+    text_surface = font.render('Você Venceu!', True, green)
+    text_rect = text_surface.get_rect(center=(screen_width // 2, screen_height // 2))
+    screen.blit(text_surface, text_rect)
+    pygame.display.flip()
+    pygame.time.wait(3000)  # Espera 3 segundos antes de sair
+
+
+# Função principal do jogo
+def main():
+    global red_lives, last_shot_time
+    running = True
+    clock = pygame.time.Clock()
+   
+    # Posicionamento inicial
+    blue_x = screen_width // 2
+    blue_y = screen_height // 2
+    red_x = random.randint(0, screen_width - cube_size)
+    red_y = random.randint(0, screen_height - cube_size)
+   
+    # Lista para armazenar tiros
+    bullets = []
+   
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:  # Botão esquerdo do mouse
+                current_time = time.time()
+                if current_time - last_shot_time >= shot_cooldown:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    direction = calculate_direction(blue_x + cube_size // 2, blue_y + cube_size // 2, mouse_x, mouse_y)
+                    bullets.append([blue_x + cube_size // 2 - 5, blue_y + cube_size // 2 - 5, direction[0], direction[1]])
+                    last_shot_time = current_time
+       
+        # Movimentação do cubo azul
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a]:
+            blue_x -= cube_speed
+        if keys[pygame.K_d]:
+            blue_x += cube_speed
+        if keys[pygame.K_w]:
+            blue_y -= cube_speed
+        if keys[pygame.K_s]:
+            blue_y += cube_speed
+       
+        # Movimentação do cubo vermelho
+        if red_x < blue_x:
+            red_x += red_cube_speed
+        if red_x > blue_x:
+            red_x -= red_cube_speed
+        if red_y < blue_y:
+            red_y += red_cube_speed
+        if red_y > blue_y:
+            red_y -= red_cube_speed
+       
+        # Mover e verificar tiros
+        move_bullets(bullets)
+        bullets = [b for b in bullets if b[0] > 0 and b[0] < screen_width and b[1] > 0 and b[1] < screen_height]
+       
+        # Verificar colisão entre tiros e o cubo vermelho
+        for bullet in bullets:
+            if check_collision(bullet[0], bullet[1], red_x, red_y):
+                red_lives -= 1
+                bullets.remove(bullet)
+                if red_lives <= 0:
+                    show_victory_screen()
+                    running = False
+                break
+       
+        # Verificar colisão entre o cubo azul e o cubo vermelho
+        if check_collision(blue_x, blue_y, red_x, red_y):
+            print("Você perdeu!")
+            running = False
+
+
+        # Preencher o fundo
+        screen.fill(black)
+       
+        # Desenhar os cubos e tiros
+        draw_blue_cube(blue_x, blue_y)
+        draw_red_cube(red_x, red_y)
+        draw_bullets(bullets)
+
+
+        # Atualizar a tela
+        pygame.display.flip()
+       
+        # Controlar a taxa de frames
+        clock.tick(30)
+
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    show_menu()
+    main()
+
+
+
