@@ -9,3 +9,6 @@ Simultaneamente a isso, também trabalhavamos nas artes do jogo, criando cenári
 Paralelamente, para controle dos dias e das metas, atualizavamos semanalmente um cronograma para visualização do nosso progresso.
 
 Além de mim, o trabalho foi feito pela Livian Helena de Oliveira(@uumu0310) e pela Bianca Beatriz Hoepers (@FERRARIfan19).
+
+
+PARA JOGAR, BAIXE A PASTA DO JOGO E RODE O ARQUIVO MENU.PY DENTRO DO VS CODE.
